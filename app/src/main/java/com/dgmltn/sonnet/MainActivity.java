@@ -8,6 +8,9 @@ import android.graphics.drawable.Drawable;
 import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.View;
@@ -24,7 +27,7 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
-public class MainActivity extends NFCActivity implements AdapterView.OnItemClickListener {
+public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemClickListener {
 
 	private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -40,7 +43,7 @@ public class MainActivity extends NFCActivity implements AdapterView.OnItemClick
 	protected TextView vDeviceName;
 
 	@InjectView(R.id.playlist)
-	protected ListView vPlaylist;
+	protected RecyclerView vPlaylist;
 
 	private Subscription mSubscription;
 
@@ -50,7 +53,13 @@ public class MainActivity extends NFCActivity implements AdapterView.OnItemClick
 		setContentView(R.layout.activity_main);
 		ButterKnife.inject(this);
 
-		vPlaylist.setOnItemClickListener(this);
+		// Initialize playlist
+		vPlaylist.setHasFixedSize(true);
+		GridLayoutManager glm = new GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false);
+		vPlaylist.setLayoutManager(glm);
+//		LinearLayoutManager llm = new LinearLayoutManager(this);
+//		llm.setOrientation(LinearLayoutManager.VERTICAL);
+//		vPlaylist.setLayoutManager(llm);
 	}
 
 	@Override
@@ -72,6 +81,7 @@ public class MainActivity extends NFCActivity implements AdapterView.OnItemClick
 		}
 		if (mAdapter == null) {
 			mAdapter = new SonosItemAdapter(this);
+			mAdapter.setItemClickListener(this);
 			vPlaylist.setAdapter(mAdapter);
 		}
 		if (mSubscription != null && !mSubscription.isUnsubscribed()) {
@@ -91,9 +101,9 @@ public class MainActivity extends NFCActivity implements AdapterView.OnItemClick
 	}
 
 	@Override
-	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+	public void onClick(SonosItem item, int position) {
 		mConfig.getDevice()
-			.playSonosItemNow(mAdapter.getItem(position))
+			.playSonosItemNow(item)
 			.subscribeOn(Schedulers.io())
 			.observeOn(AndroidSchedulers.mainThread())
 			.subscribe();

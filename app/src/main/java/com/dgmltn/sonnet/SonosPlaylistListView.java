@@ -48,7 +48,7 @@ public class SonosPlaylistListView extends ListView {
 
 	private void init(Context context) {
 		mAdapter = new SonosItemAdapter(context);
-		setAdapter(mAdapter);
+	//	setAdapter(mAdapter);
 
 
 		setOnItemClickListener(new OnItemClickListener() {
