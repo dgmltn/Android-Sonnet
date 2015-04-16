@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Sonnet</string>
+    <string name="app_settings_label">Sonnet Settings</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+</resources>
