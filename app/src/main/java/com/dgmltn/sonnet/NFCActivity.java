@@ -16,8 +16,6 @@ public class NFCActivity extends Activity {
 
 	public static final String TAG = NFCActivity.class.getSimpleName();
 
-	public static final String FOREGROUND_DISPATCH = "NFCActivity.FOREGROUND_DISPATCH";
-
 	private NfcAdapter mNfcAdapter;
 	private boolean mForeground;
 
@@ -28,7 +26,6 @@ public class NFCActivity extends Activity {
 		mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
 
 		Log.e(TAG, "onCreate");
-		handleIntent(getIntent());
 	}
 
 	@Override
@@ -51,8 +48,7 @@ public class NFCActivity extends Activity {
 	@Override
 	protected void onStart() {
 		super.onStart();
-		mForeground = false;
-		Log.e(TAG, "onStart");
+		handleIntent(getIntent());
 	}
 
 	@Override
@@ -63,15 +59,7 @@ public class NFCActivity extends Activity {
 		 * It's important, that the activity is in the foreground (resumed). Otherwise
 		 * an IllegalStateException is thrown.
 		 */
-		setupForegroundDispatch(this, mNfcAdapter);
-		mForeground = true;
-	}
-
-	@Override
-	protected void onStop() {
-		super.onStop();
-		mForeground = false;
-		Log.e(TAG, "onStop");
+		setupForegroundDispatch(mNfcAdapter);
 	}
 
 	@Override
@@ -79,7 +67,7 @@ public class NFCActivity extends Activity {
 		/**
 		 * Call this before onPause, otherwise an IllegalArgumentException is thrown as well.
 		 */
-		stopForegroundDispatch(this, mNfcAdapter);
+		stopForegroundDispatch(mNfcAdapter);
 
 		super.onPause();
 	}
@@ -98,13 +86,12 @@ public class NFCActivity extends Activity {
 	}
 
 	/**
-	 * @param activity The corresponding {@link Activity} requesting the foreground dispatch.
 	 * @param adapter The {@link NfcAdapter} used for the foreground dispatch.
 	 */
-	public static void setupForegroundDispatch(final Activity activity, NfcAdapter adapter) {
-		final Intent intent = new Intent(activity.getApplicationContext(), activity.getClass());
+	public void setupForegroundDispatch(NfcAdapter adapter) {
+		final Intent intent = new Intent(getApplicationContext(), this.getClass());
 
-		final PendingIntent pendingIntent = PendingIntent.getActivity(activity.getApplicationContext(), 0, intent, 0);
+		final PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
 
 		IntentFilter[] filters = new IntentFilter[1];
 		String[][] techList = new String[][]{
@@ -123,15 +110,16 @@ public class NFCActivity extends Activity {
 		filters[0] = new IntentFilter();
 		filters[0].addAction(NfcAdapter.ACTION_TECH_DISCOVERED);
 
-		adapter.enableForegroundDispatch(activity, pendingIntent, filters, techList);
+		adapter.enableForegroundDispatch(this, pendingIntent, filters, techList);
+		mForeground = true;
 	}
 
 	/**
-	 * @param activity The corresponding {@link Activity} requesting to stop the foreground dispatch.
 	 * @param adapter The {@link NfcAdapter} used for the foreground dispatch.
 	 */
-	public static void stopForegroundDispatch(final Activity activity, NfcAdapter adapter) {
-		adapter.disableForegroundDispatch(activity);
+	public void stopForegroundDispatch(NfcAdapter adapter) {
+		adapter.disableForegroundDispatch(this);
+		mForeground = false;
 	}
 
 	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
