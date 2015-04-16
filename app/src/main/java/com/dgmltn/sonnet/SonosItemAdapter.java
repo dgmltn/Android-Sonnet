@@ -102,6 +102,7 @@ public class SonosItemAdapter extends RecyclerView.Adapter<SonosItemAdapter.View
 			int position = getAdapterPosition();
 			if (mListener != null) {
 				mListener.onClick(mItems.get(position), position);
+				notifyItemChanged(position);
 			}
 		}
 	}

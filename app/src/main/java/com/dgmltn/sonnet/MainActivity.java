@@ -8,23 +8,16 @@ import android.graphics.drawable.Drawable;
 import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
-import android.widget.AdapterView;
 import android.widget.FrameLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemClickListener {
@@ -33,7 +26,6 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 
 	private SonosConfig mConfig;
 
-	private SonosItemAdapter mAdapter;
 	private Handler mHandler = new Handler();
 
 	@InjectView(R.id.root)
@@ -43,9 +35,7 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 	protected TextView vDeviceName;
 
 	@InjectView(R.id.playlist)
-	protected RecyclerView vPlaylist;
-
-	private Subscription mSubscription;
+	protected SonosItemGridView vPlaylist;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -53,13 +43,7 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 		setContentView(R.layout.activity_main);
 		ButterKnife.inject(this);
 
-		// Initialize playlist
-		vPlaylist.setHasFixedSize(true);
-		GridLayoutManager glm = new GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false);
-		vPlaylist.setLayoutManager(glm);
-//		LinearLayoutManager llm = new LinearLayoutManager(this);
-//		llm.setOrientation(LinearLayoutManager.VERTICAL);
-//		vPlaylist.setLayoutManager(llm);
+		vPlaylist.setItemClickListener(this);
 	}
 
 	@Override
@@ -79,25 +63,7 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 				return;
 			}
 		}
-		if (mAdapter == null) {
-			mAdapter = new SonosItemAdapter(this);
-			mAdapter.setItemClickListener(this);
-			vPlaylist.setAdapter(mAdapter);
-		}
-		if (mSubscription != null && !mSubscription.isUnsubscribed()) {
-			mSubscription.unsubscribe();
-		}
-		mAdapter.clear();
-		mSubscription = mConfig.getDevice()
-			.getPlaylistItems(mConfig.getPlaylist())
-			.subscribeOn(Schedulers.io())
-			.observeOn(AndroidSchedulers.mainThread())
-			.subscribe(new Action1<SonosItem>() {
-				@Override
-				public void call(SonosItem item) {
-					mAdapter.add(item);
-				}
-			});
+		vPlaylist.populatePlaylist(mConfig.getDevice(), mConfig.getPlaylist());
 	}
 
 	@Override
