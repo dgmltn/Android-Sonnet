@@ -1,5 +1,7 @@
 package com.dgmltn.sonnet;
 
+import java.util.regex.Pattern;
+
 /**
  * Created by doug on 4/1/15. Static utils used throughout the app.
  */
@@ -34,6 +36,15 @@ public class Utils {
 		}
 
 		return out.toString();
+	}
+
+
+	private static final Pattern IPV4_PATTERN =
+		Pattern.compile(
+			"^(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}$");
+
+	public static boolean isIPv4Address(final String input) {
+		return IPV4_PATTERN.matcher(input).matches();
 	}
 
 }

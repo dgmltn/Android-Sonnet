@@ -6,26 +6,25 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ListView;
 import android.widget.TextView;
 
+import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 
 public class SonosListActivity extends Activity {
 
 	private static final String TAG = SonosListActivity.class.getSimpleName();
 
-	@InjectView(R.id.device_text)
+	@Bind(R.id.device_text)
 	protected TextView vDeviceText;
 
-	@InjectView(R.id.device_list)
+	@Bind(R.id.device_list)
 	protected SonosDeviceListView vDeviceList;
 
-	@InjectView(R.id.playlist_text)
+	@Bind(R.id.playlist_text)
 	protected TextView vPlaylistText;
 
-	@InjectView(R.id.playlists_list)
+	@Bind(R.id.playlists_list)
 	protected SonosPlaylistsListView vPlaylistsList;
 
 	private SonosDevice mChosenDevice;
@@ -35,7 +34,7 @@ public class SonosListActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_upnp);
-		ButterKnife.inject(this);
+		ButterKnife.bind(this);
 
 		chooseDevice();
 

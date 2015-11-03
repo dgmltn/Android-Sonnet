@@ -1,5 +1,7 @@
 package com.dgmltn.sonnet;
 
+import java.io.IOException;
+
 import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.graphics.Color;
@@ -10,14 +12,18 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.text.format.DateUtils;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import com.squareup.okhttp.Response;
+
+import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemClickListener {
@@ -28,20 +34,20 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 
 	private Handler mHandler = new Handler();
 
-	@InjectView(R.id.root)
+	@Bind(R.id.root)
 	protected FrameLayout vRoot;
 
-	@InjectView(R.id.device_name)
+	@Bind(R.id.device_name)
 	protected TextView vDeviceName;
 
-	@InjectView(R.id.playlist)
+	@Bind(R.id.playlist)
 	protected SonosItemGridView vPlaylist;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		ButterKnife.inject(this);
+		ButterKnife.bind(this);
 
 		vPlaylist.setItemClickListener(this);
 	}
@@ -64,6 +70,37 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 			}
 		}
 		vPlaylist.populatePlaylist(mConfig.getDevice(), mConfig.getPlaylist());
+	}
+
+	@Override
+	public boolean dispatchKeyEvent(KeyEvent event) {
+		int action = event.getAction();
+		int keyCode = event.getKeyCode();
+		switch (keyCode) {
+		case KeyEvent.KEYCODE_VOLUME_UP:
+			if (action == KeyEvent.ACTION_DOWN) {
+				//TODO: volume control
+				Log.e("DOUG", "pressed volume up");
+				mConfig.getDevice()
+					.getVolumeString()
+					.subscribeOn(Schedulers.io())
+					.observeOn(AndroidSchedulers.mainThread())
+					.subscribe(new Action1<String>() {
+						@Override
+						public void call(String volume) {
+							Log.e("DOUG", "getVolume: " + volume);
+						}
+					});
+			}
+			return true;
+		case KeyEvent.KEYCODE_VOLUME_DOWN:
+			if (action == KeyEvent.ACTION_DOWN) {
+				//TODO
+			}
+			return true;
+		default:
+			return super.dispatchKeyEvent(event);
+		}
 	}
 
 	@Override

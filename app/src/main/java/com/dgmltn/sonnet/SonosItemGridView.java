@@ -1,11 +1,9 @@
 package com.dgmltn.sonnet;
 
 import android.content.Context;
-import android.content.Intent;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.view.View;
 
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -40,7 +38,6 @@ public class SonosItemGridView extends RecyclerView {
 		setHasFixedSize(true);
 		GridLayoutManager glm = new GridLayoutManager(context, 2, GridLayoutManager.VERTICAL, false);
 		setLayoutManager(glm);
-		setItemAnimator(new ExplodeItemAnimator());
 
 		mAdapter = new SonosItemAdapter(context);
 		setAdapter(mAdapter);
@@ -69,45 +66,39 @@ public class SonosItemGridView extends RecyclerView {
 
 	private static class ExplodeItemAnimator extends RecyclerView.ItemAnimator {
 		@Override
+		public boolean animateDisappearance(ViewHolder viewHolder,
+			ItemHolderInfo preLayoutInfo,
+			ItemHolderInfo postLayoutInfo) {
+			return false;
+		}
+
+		@Override
+		public boolean animateAppearance(ViewHolder viewHolder,
+			ItemHolderInfo preLayoutInfo,
+			ItemHolderInfo postLayoutInfo) {
+			return false;
+		}
+
+		@Override
+		public boolean animatePersistence(ViewHolder viewHolder,
+			ItemHolderInfo preLayoutInfo,
+			ItemHolderInfo postLayoutInfo) {
+			return false;
+		}
+
+		@Override
+		public boolean animateChange(ViewHolder oldHolder, final ViewHolder newHolder,
+			ItemHolderInfo preLayoutInfo,
+			ItemHolderInfo postLayoutInfo) {
+			return false;
+		}
+
+		@Override
 		public void runPendingAnimations() {
-
 		}
 
 		@Override
-		public boolean animateRemove(RecyclerView.ViewHolder viewHolder) {
-			return false;
-		}
-
-		@Override
-		public boolean animateAdd(RecyclerView.ViewHolder viewHolder) {
-			return false;
-		}
-
-		@Override
-		public boolean animateMove(RecyclerView.ViewHolder viewHolder,
-			int i, int i2, int i3, int i4) {
-			return false;
-		}
-
-		@Override
-		public boolean animateChange(final RecyclerView.ViewHolder viewHolder,
-			RecyclerView.ViewHolder viewHolder2,
-			int fromLeft, int fromTop, int toLeft, int toTop) {
-			viewHolder.itemView.animate().scaleX(3f).scaleY(3f).alpha(0f).withEndAction(new Runnable() {
-				@Override
-				public void run() {
-					dispatchChangeFinished(viewHolder, true);
-				}
-			}).start();
-			return false;
-		}
-
-		@Override
-		public void onChangeFinished(RecyclerView.ViewHolder viewHolder, boolean oldItem) {
-			viewHolder.itemView.setVisibility(View.GONE);
-			viewHolder.itemView.setAlpha(1f);
-			viewHolder.itemView.setScaleX(1f);
-			viewHolder.itemView.setScaleY(1f);
+		public void onAnimationFinished(ViewHolder viewHolder) {
 		}
 
 		@Override
@@ -116,7 +107,6 @@ public class SonosItemGridView extends RecyclerView {
 
 		@Override
 		public void endAnimations() {
-
 		}
 
 		@Override

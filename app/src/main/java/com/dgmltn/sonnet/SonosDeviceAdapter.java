@@ -10,9 +10,8 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
-import butterknife.Optional;
 
 /**
  * Created by doug on 3/29/15.
@@ -57,11 +56,11 @@ public class SonosDeviceAdapter extends ArrayAdapter<SonosDevice> {
 	}
 
 	static class ViewHolder {
-		@InjectView(R.id.title)
+		@Bind(R.id.title)
 		TextView title;
 
 		public ViewHolder(View view) {
-			ButterKnife.inject(this, view);
+			ButterKnife.bind(this, view);
 		}
 	}
 }

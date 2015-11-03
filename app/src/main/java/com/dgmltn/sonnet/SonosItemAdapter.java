@@ -3,22 +3,21 @@ package com.dgmltn.sonnet;
 import java.util.ArrayList;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
+import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 import butterknife.OnClick;
-import butterknife.Optional;
 
 /**
  * Created by doug on 3/29/15.
@@ -38,7 +37,7 @@ public class SonosItemAdapter extends RecyclerView.Adapter<SonosItemAdapter.View
 		super();
 		inflater = LayoutInflater.from(context);
 		picasso = Picasso.with(context);
-		picasso.setIndicatorsEnabled(true);
+		picasso.setIndicatorsEnabled(false);
 		mItems = new ArrayList<>();
 	}
 
@@ -85,24 +84,37 @@ public class SonosItemAdapter extends RecyclerView.Adapter<SonosItemAdapter.View
 	}
 
 	class ViewHolder extends RecyclerView.ViewHolder {
-		@InjectView(R.id.art)
+		@Bind(R.id.art)
 		ImageView art;
 
-		@InjectView(R.id.title)
-		@Optional
+		@Bind(R.id.title)
+		@Nullable
 		TextView title;
 
 		public ViewHolder(View view) {
 			super(view);
-			ButterKnife.inject(this, view);
+			ButterKnife.bind(this, view);
 		}
 
 		@OnClick(R.id.root)
-		public void click(View view) {
+		public void click(final View view) {
+			view.animate()
+				.scaleX(3f).scaleY(3f).alpha(0f)
+				.setDuration(500)
+				.setInterpolator(new AccelerateInterpolator())
+				.withEndAction(new Runnable() {
+					@Override
+					public void run() {
+						view.setScaleX(1f);
+						view.setScaleY(1f);
+						view.animate().alpha(1f).setDuration(300).setInterpolator(new DecelerateInterpolator()).start();
+					}
+				})
+				.start();
+
 			int position = getAdapterPosition();
 			if (mListener != null) {
 				mListener.onClick(mItems.get(position), position);
-				notifyItemChanged(position);
 			}
 		}
 	}

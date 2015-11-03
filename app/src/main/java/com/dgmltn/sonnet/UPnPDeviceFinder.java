@@ -10,8 +10,6 @@ import java.net.SocketAddress;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.http.conn.util.InetAddressUtils;
-
 import android.util.Log;
 
 import rx.Observable;
@@ -168,7 +166,7 @@ public class UPnPDeviceFinder {
 					if (!addr.isLoopbackAddress()) {
 						Log.e(TAG, "IP from inet is: " + addr);
 						String sAddr = addr.getHostAddress().toUpperCase();
-						boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
+						boolean isIPv4 = Utils.isIPv4Address(sAddr);
 						if (useIPv4) {
 							if (isIPv4) {
 								Log.e(TAG, "IP v4");

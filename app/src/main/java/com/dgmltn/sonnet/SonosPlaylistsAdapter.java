@@ -7,8 +7,8 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 
 /**
  * Created by doug on 3/29/15.
@@ -48,11 +48,11 @@ public class SonosPlaylistsAdapter extends ArrayAdapter<SonosPlaylist> {
 	}
 
 	static class ViewHolder {
-		@InjectView(R.id.title)
+		@Bind(R.id.title)
 		TextView title;
 
 		public ViewHolder(View view) {
-			ButterKnife.inject(this, view);
+			ButterKnife.bind(this, view);
 		}
 	}
 }

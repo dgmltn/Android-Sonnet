@@ -39,6 +39,9 @@ import rx.subscriptions.Subscriptions;
  * <p/>
  * Created by doug on 3/23/15.
  * <p/>
+ *
+ * See: https://github.com/DjMomo/sonos/blob/master/sonos.class.php
+ *
  */
 public class SonosDevice implements Comparable {
 
@@ -153,7 +156,7 @@ public class SonosDevice implements Comparable {
 			.flatMap(new Func1<Response, Observable<String>>() {
 				@Override
 				public Observable<String> call(final Response response) {
-					return parseResonseForResult(response);
+					return parseResponseForResult(response);
 				}
 			})
 			.flatMap(new Func1<String, Observable<SonosPlaylist>>() {
@@ -167,7 +170,7 @@ public class SonosDevice implements Comparable {
 	/**
 	 * Get items in a playlist
 	 *
-	 * @param playlistUri
+	 * @param playlist a list of SonosItem
 	 * @return
 	 */
 	public Observable<SonosItem> getPlaylistItems(SonosPlaylist playlist) {
@@ -175,7 +178,7 @@ public class SonosDevice implements Comparable {
 			.flatMap(new Func1<Response, Observable<String>>() {
 				@Override
 				public Observable<String> call(final Response response) {
-					return parseResonseForResult(response);
+					return parseResponseForResult(response);
 				}
 			})
 			.flatMap(new Func1<String, Observable<SonosItem>>() {
@@ -190,7 +193,7 @@ public class SonosDevice implements Comparable {
 	 * Clears the queue and plays the item passed in. This won't work if the item is
 	 * from a streaming service like Rdio or SoundCloud.
 	 *
-	 * @param uri URI of new track
+	 * @param item new track to play
 	 */
 	public Observable<Response> playSonosItemNow(final SonosItem item) {
 		return becomeCoordinatorOfStandaloneGroup()
@@ -268,7 +271,7 @@ public class SonosDevice implements Comparable {
 			.flatMap(new Func1<Response, Observable<String>>() {
 				@Override
 				public Observable<String> call(final Response response) {
-					return parseResonseForResult(response);
+					return parseResponseForResult(response);
 				}
 			});
 	}
@@ -315,9 +318,31 @@ public class SonosDevice implements Comparable {
 		return browse("Q:0");
 	}
 
+	public Observable<String> getVolumeString() {
+		return getVolume()
+			.flatMap(new Func1<Response, Observable<String>>() {
+				@Override
+				public Observable<String> call(Response response) {
+					return parseResponseFor(response, "CurrentVolume");
+				}
+			});
+	}
+
 	////////////////////////////////////////////////////////////////////////////////////////
 	// Directly mapped upnp / sonos device commands
 	////////////////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Returns information about the currently playing track.
+	 * @return
+	 */
+	public Observable<Response> getPositionInfo() {
+		String url = "/MediaRenderer/AVTransport/Control";
+		String action = "GetPositionInfo";
+		String service = "urn:schemas-upnp-org:service:AVTransport:1";
+		String args = "<InstanceID>0</InstanceID><Channel>Master</Channel>";
+		return upnp(url, service, action, args);
+	}
 
 	/**
 	 * Plays/Resumes the current queue or stream for this device.
@@ -384,6 +409,23 @@ public class SonosDevice implements Comparable {
 		String action = "Previous";
 		String service = "urn:schemas-upnp-org:service:AVTransport:1";
 		String args = "<InstanceID>0</InstanceID>";
+		return upnp(url, service, action, args);
+	}
+
+	public Observable<Response> getVolume() {
+		String url = "/MediaRenderer/RenderingControl/Control";
+		String action = "GetVolume";
+		String service = "urn:schemas-upnp-org:service:RenderingControl:1";
+		String args = "<InstanceID>0</InstanceID><Channel>Master</Channel>";
+		return upnp(url, service, action, args);
+	}
+
+	public Observable<Response> setVolume(String volume) {
+		//TODO
+		String url = "/MediaRenderer/RenderingControl/Control";
+		String action = "SetVolume";
+		String service = "urn:schemas-upnp-org:service:RenderingControl:1";
+		String args = "<InstanceID>0</InstanceID><Channel>Master</Channel><DesiredVolume>" + volume + "</DesiredVolume>";
 		return upnp(url, service, action, args);
 	}
 
@@ -650,7 +692,17 @@ public class SonosDevice implements Comparable {
 	 * @param response
 	 * @return
 	 */
-	public Observable<String> parseResonseForResult(final Response response) {
+	public Observable<String> parseResponseForResult(final Response response) {
+		return this.parseResponseFor(response, "Result");
+	}
+
+	/**
+	 * Looks through an xml Response for the <mytag>...</mytag> inside it, and returns that as a String.
+	 *
+	 * @param response
+	 * @return
+	 */
+	public Observable<String> parseResponseFor(final Response response, final String tag) {
 		return Observable.create(new Observable.OnSubscribe<String>() {
 			@Override
 			public void call(Subscriber<? super String> subscriber) {
@@ -664,8 +716,8 @@ public class SonosDevice implements Comparable {
 					while (eventType != XmlPullParser.END_DOCUMENT) {
 						switch (eventType) {
 						case XmlPullParser.END_TAG:
-							if ("Result".equals(xpp.getName())) {
-								Log.e(TAG, "Result = " + text);
+							if (tag.equals(xpp.getName())) {
+								Log.e(TAG, tag + " = " + text);
 								subscriber.onNext(text);
 							}
 							text = null;
