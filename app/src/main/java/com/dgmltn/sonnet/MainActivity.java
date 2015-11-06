@@ -1,7 +1,5 @@
 package com.dgmltn.sonnet;
 
-import java.io.IOException;
-
 import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.graphics.Color;
@@ -13,12 +11,15 @@ import android.os.Handler;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import com.squareup.okhttp.Response;
+import com.afollestad.materialdialogs.MaterialDialog;
+import com.afollestad.materialdialogs.Theme;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -36,9 +37,6 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 
 	@Bind(R.id.root)
 	protected FrameLayout vRoot;
-
-	@Bind(R.id.device_name)
-	protected TextView vDeviceName;
 
 	@Bind(R.id.playlist)
 	protected SonosItemGridView vPlaylist;
@@ -58,7 +56,7 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 
 		populatePlaylist();
 
-		showDeviceName(false, 5);
+		showCurrentConfigDialog(false, 5);
 	}
 
 	private void populatePlaylist() {
@@ -112,7 +110,7 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 			.subscribe();
 	}
 
-	private void showDeviceName(boolean flash, int numberOfSeconds) {
+	private void showCurrentConfigDialog(boolean flash, int numberOfSeconds) {
 		if (vRoot == null || mConfig == null) {
 			return;
 		}
@@ -125,20 +123,64 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 			anim.setDuration(1000).start();
 		}
 
-		vDeviceName.setText(mConfig.getDevice().getRoomName());
-		vDeviceName.setVisibility(View.VISIBLE);
-		vDeviceName.setAlpha(1f);
-		mHandler.postDelayed(new Runnable() {
+		final long dismiss = System.currentTimeMillis() + numberOfSeconds * DateUtils.SECOND_IN_MILLIS;
+
+		View view = LayoutInflater.from(this).inflate(R.layout.dialog_room_and_playlist, null);
+		TextView deviceName = (TextView) view.findViewById(R.id.device_name);
+		deviceName.setText(mConfig.getDevice().getRoomName());
+		TextView playlistName = (TextView) view.findViewById(R.id.playlist_name);
+		playlistName.setText(mConfig.getPlaylist().title);
+
+		final MaterialDialog dialog = new MaterialDialog.Builder(this)
+			.theme(Theme.DARK)
+			.customView(view, false)
+			.show();
+
+		final Runnable dismissCallback = new Runnable() {
 			@Override
 			public void run() {
-				vDeviceName.animate().alpha(0f).setDuration(500).withEndAction(new Runnable() {
-					@Override
-					public void run() {
-						vDeviceName.setVisibility(View.INVISIBLE);
-					}
-				}).start();
+				dialog.dismiss();
 			}
-		}, numberOfSeconds * DateUtils.SECOND_IN_MILLIS);
+		};
+
+		final Runnable dismissAndChooseDevice = new Runnable() {
+			@Override
+			public void run() {
+				dialog.dismiss();
+				Log.e("DOUG", "long pressed device name button");
+			}
+		};
+
+		final Runnable dismissAndChoosePlaylist = new Runnable() {
+			@Override
+			public void run() {
+				dialog.dismiss();
+				Log.e("DOUG", "long pressed playlist button");
+			}
+		};
+
+		View.OnTouchListener touchListener = new View.OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				switch (event.getAction()) {
+				case MotionEvent.ACTION_DOWN:
+					mHandler.removeCallbacksAndMessages(null);
+					Runnable runnable = v.getId() == R.id.device_name ? dismissAndChooseDevice : dismissAndChoosePlaylist;
+					mHandler.postDelayed(runnable, 5 * DateUtils.SECOND_IN_MILLIS);
+					return true;
+				case MotionEvent.ACTION_UP:
+					mHandler.removeCallbacksAndMessages(null);
+					mHandler.postDelayed(dismissCallback, dismiss - System.currentTimeMillis());
+					return true;
+				}
+				return false;
+			}
+		};
+
+		deviceName.setOnTouchListener(touchListener);
+		playlistName.setOnTouchListener(touchListener);
+
+		mHandler.postDelayed(dismissCallback, dismiss - System.currentTimeMillis());
 	}
 
 	@Override
@@ -166,6 +208,6 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 
 		Pref.setSonosConfig(this, mConfig);
 		populatePlaylist();
-		showDeviceName(foreground, 5);
+		showCurrentConfigDialog(foreground, 5);
 	}
 }

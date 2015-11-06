@@ -11,18 +11,4 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <TextView
-        android:id="@+id/device_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:drawableLeft="@drawable/ic_speaker"
-        android:drawablePadding="16dp"
-        android:padding="24dp"
-        android:gravity="center_vertical|left"
-        android:textColor="#ffffff"
-        android:textSize="18sp"
-        android:text="Kitchen"
-        android:background="@drawable/bg_dialog" />
-
 </FrameLayout>
