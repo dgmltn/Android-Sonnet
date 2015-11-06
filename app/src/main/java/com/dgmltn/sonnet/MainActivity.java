@@ -2,6 +2,7 @@ package com.dgmltn.sonnet;
 
 import android.animation.ObjectAnimator;
 import android.content.Intent;
+import android.database.DataSetObserver;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -14,9 +15,13 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
+import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
+import android.widget.ListAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.Theme;
@@ -25,6 +30,7 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
+import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
 public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemClickListener {
@@ -125,15 +131,9 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 
 		final long dismiss = System.currentTimeMillis() + numberOfSeconds * DateUtils.SECOND_IN_MILLIS;
 
-		View view = LayoutInflater.from(this).inflate(R.layout.dialog_room_and_playlist, null);
-		TextView deviceName = (TextView) view.findViewById(R.id.device_name);
-		deviceName.setText(mConfig.getDevice().getRoomName());
-		TextView playlistName = (TextView) view.findViewById(R.id.playlist_name);
-		playlistName.setText(mConfig.getPlaylist().title);
-
 		final MaterialDialog dialog = new MaterialDialog.Builder(this)
 			.theme(Theme.DARK)
-			.customView(view, false)
+			.customView(R.layout.dialog_room_and_playlist, false)
 			.show();
 
 		final Runnable dismissCallback = new Runnable() {
@@ -147,7 +147,7 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 			@Override
 			public void run() {
 				dialog.dismiss();
-				Log.e("DOUG", "long pressed device name button");
+				showDeviceChooser();
 			}
 		};
 
@@ -177,10 +177,62 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 			}
 		};
 
+		View view = dialog.getCustomView();
+
+		TextView deviceName = (TextView) view.findViewById(R.id.device_name);
+		deviceName.setText(mConfig.getDevice().getRoomName());
 		deviceName.setOnTouchListener(touchListener);
+
+		TextView playlistName = (TextView) view.findViewById(R.id.playlist_name);
+		playlistName.setText(mConfig.getPlaylist().title);
 		playlistName.setOnTouchListener(touchListener);
 
 		mHandler.postDelayed(dismissCallback, dismiss - System.currentTimeMillis());
+	}
+
+	private void showDeviceChooser() {
+		final MaterialSimpleListAdapter<SonosDevice> adapter = new MaterialSimpleListAdapter<>(this);
+
+		new UPnPDeviceFinder().observe()
+			.map(new Func1<UPnPDevice, SonosDevice>() {
+				@Override
+				public SonosDevice call(UPnPDevice device) {
+					return SonosDevice.newInstance(device);
+				}
+			})
+			.filter(new Func1<SonosDevice, Boolean>() {
+				@Override
+				public Boolean call(SonosDevice sonosDevice) {
+					return sonosDevice != null;
+				}
+			})
+			.subscribeOn(Schedulers.io())
+			.observeOn(AndroidSchedulers.mainThread())
+			.subscribe(new Action1<SonosDevice>() {
+				@Override
+				public void call(SonosDevice device) {
+					adapter.add(new MaterialSimpleListItem.Builder<SonosDevice>(MainActivity.this)
+						.content(device)
+						.icon(R.drawable.ic_speaker_padded)
+						.backgroundColorRes(R.color.indigo_500)
+						.build());
+				}
+			});
+
+		new MaterialDialog.Builder(this)
+			.title(R.string.Choose_Device)
+			.adapter(adapter, new MaterialDialog.ListCallback() {
+				@Override
+				public void onSelection(MaterialDialog materialDialog, View view, int i, CharSequence charSequence) {
+					mConfig.setDevice(adapter.getItem(i).getContent());
+					Pref.setSonosConfig(MainActivity.this, mConfig);
+					materialDialog.dismiss();
+					showCurrentConfigDialog(false, 5);
+				}
+			})
+			.theme(Theme.DARK)
+			.show();
+
 	}
 
 	@Override
