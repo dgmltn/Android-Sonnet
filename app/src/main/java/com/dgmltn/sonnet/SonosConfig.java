@@ -46,9 +46,9 @@ public class SonosConfig {
 	// Temporary config for Doug's House
 	/////////////////////////////////////////////////////////////////////////
 
-	public static final SonosDevice ZONE_FAMILY_ROOM = SonosDevice.newInstance(
+	public static final SonosDevice ZONE_TV = SonosDevice.newInstance(
 		"http://10.5.23.196:1400/xml/device_description.xml",
-		"Family Room",
+		"TV",
 		"RINCON_000E58B7172801400");
 
 	public static final SonosDevice ZONE_BEDROOM = SonosDevice.newInstance(
@@ -62,7 +62,7 @@ public class SonosConfig {
 		"RINCON_B8E93753707001400");
 
 	public static final SonosDevice ZONE_LIVING_ROOM = SonosDevice.newInstance(
-		"http://10.5.23.205:1400/xml/device_description.xml",
+		"http://10.5.23.114:1400/xml/device_description.xml",
 		"Living Room",
 		"RINCON_B8E9378E5CD601400");
 

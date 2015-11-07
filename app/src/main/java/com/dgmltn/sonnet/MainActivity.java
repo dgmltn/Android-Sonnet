@@ -56,7 +56,7 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 	protected void onResume() {
 		super.onResume();
 		populatePlaylist();
-		showCurrentConfigDialog(false, 5);
+		showCurrentConfigDialog();
 	}
 
 	private void populatePlaylist() {
@@ -117,18 +117,19 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 			.subscribe();
 	}
 
-	private void showCurrentConfigDialog(boolean flash, int numberOfSeconds) {
+	private void flashScreen() {
+		Drawable flasher = new ColorDrawable(Color.WHITE);
+		vRoot.setForeground(flasher);
+		ObjectAnimator anim = ObjectAnimator.ofInt(flasher, "alpha", 255, 0);
+		anim.setInterpolator(new DecelerateInterpolator());
+		anim.setDuration(1000).start();
+	}
+
+	private void showCurrentConfigDialog() {
 		if (vRoot == null || mConfig == null || mConfig.getDevice() == null || mConfig.getPlaylist() == null) {
 			return;
 		}
-
-		if (flash) {
-			Drawable flasher = new ColorDrawable(Color.WHITE);
-			vRoot.setForeground(flasher);
-			ObjectAnimator anim = ObjectAnimator.ofInt(flasher, "alpha", 255, 0);
-			anim.setInterpolator(new DecelerateInterpolator());
-			anim.setDuration(1000).start();
-		}
+		int numberOfSeconds = 3;
 
 		final long dismiss = System.currentTimeMillis() + numberOfSeconds * DateUtils.SECOND_IN_MILLIS;
 
@@ -230,7 +231,7 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 					Pref.setSonosConfig(MainActivity.this, mConfig);
 					materialDialog.dismiss();
 					populatePlaylist();
-					showCurrentConfigDialog(false, 5);
+					showCurrentConfigDialog();
 				}
 			})
 			.theme(Theme.DARK)
@@ -298,26 +299,23 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 		Log.e(TAG, "NFC Tag Discovered: " + id + " foreground? " + foreground);
 
 		if (mConfig == null) {
-			mConfig = new SonosConfig(SonosConfig.ZONE_OFFICE, SonosConfig.PLAYLIST_GIRLS);
+			mConfig = new SonosConfig(null, null);
 		}
 
 		switch (id) {
 		case "AED4D515":
 			mConfig.setDevice(SonosConfig.ZONE_OFFICE);
-			mConfig.setPlaylist(SonosConfig.PLAYLIST_GIRLS);
 			break;
-		case "AE5BD215":
-			mConfig.setDevice(SonosConfig.ZONE_OFFICE);
-			mConfig.setPlaylist(SonosConfig.PLAYLIST_HIP_HOP);
+		case "5E70D415":
+			mConfig.setDevice(SonosConfig.ZONE_LIVING_ROOM);
 			break;
 		case "4E2BD115":
-			mConfig.setDevice(SonosConfig.ZONE_FAMILY_ROOM);
-			mConfig.setPlaylist(SonosConfig.PLAYLIST_GIRLS);
+			mConfig.setDevice(SonosConfig.ZONE_TV);
 			break;
 		}
 
 		Pref.setSonosConfig(this, mConfig);
 		populatePlaylist();
-		showCurrentConfigDialog(foreground, 5);
+		showCurrentConfigDialog();
 	}
 }
