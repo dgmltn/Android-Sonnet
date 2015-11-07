@@ -23,4 +23,9 @@ public class SonosPlaylist {
 		this.url = url;
 		this.items = new ArrayList<>();
 	}
+
+	@Override
+	public String toString() {
+		return title;
+	}
 }

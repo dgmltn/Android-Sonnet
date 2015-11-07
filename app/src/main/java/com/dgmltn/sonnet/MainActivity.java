@@ -1,8 +1,8 @@
 package com.dgmltn.sonnet;
 
 import android.animation.ObjectAnimator;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.DataSetObserver;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -12,17 +12,13 @@ import android.os.Handler;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
-import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
-import android.widget.ListAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.Theme;
 
@@ -59,19 +55,24 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 	@Override
 	protected void onResume() {
 		super.onResume();
-
 		populatePlaylist();
-
 		showCurrentConfigDialog(false, 5);
 	}
 
 	private void populatePlaylist() {
 		if (mConfig == null) {
 			mConfig = Pref.getSonosConfig(this);
-			if (mConfig == null) {
-				startActivity(new Intent(this, SonosListActivity.class));
-				return;
-			}
+		}
+		if (mConfig == null) {
+			mConfig = new SonosConfig(null, null);
+		}
+		if (mConfig.getDevice() == null) {
+			showDeviceChooser();
+			return;
+		}
+		if (mConfig.getPlaylist() == null) {
+			showPlaylistChooser();
+			return;
 		}
 		vPlaylist.populatePlaylist(mConfig.getDevice(), mConfig.getPlaylist());
 	}
@@ -117,7 +118,7 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 	}
 
 	private void showCurrentConfigDialog(boolean flash, int numberOfSeconds) {
-		if (vRoot == null || mConfig == null) {
+		if (vRoot == null || mConfig == null || mConfig.getDevice() == null || mConfig.getPlaylist() == null) {
 			return;
 		}
 
@@ -155,7 +156,7 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 			@Override
 			public void run() {
 				dialog.dismiss();
-				Log.e("DOUG", "long pressed playlist button");
+				showPlaylistChooser();
 			}
 		};
 
@@ -165,7 +166,8 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 				switch (event.getAction()) {
 				case MotionEvent.ACTION_DOWN:
 					mHandler.removeCallbacksAndMessages(null);
-					Runnable runnable = v.getId() == R.id.device_name ? dismissAndChooseDevice : dismissAndChoosePlaylist;
+					Runnable runnable =
+						v.getId() == R.id.device_name ? dismissAndChooseDevice : dismissAndChoosePlaylist;
 					mHandler.postDelayed(runnable, 5 * DateUtils.SECOND_IN_MILLIS);
 					return true;
 				case MotionEvent.ACTION_UP:
@@ -227,11 +229,67 @@ public class MainActivity extends NFCActivity implements SonosItemAdapter.ItemCl
 					mConfig.setDevice(adapter.getItem(i).getContent());
 					Pref.setSonosConfig(MainActivity.this, mConfig);
 					materialDialog.dismiss();
+					populatePlaylist();
 					showCurrentConfigDialog(false, 5);
 				}
 			})
 			.theme(Theme.DARK)
+			.dismissListener(new DialogInterface.OnDismissListener() {
+				@Override
+				public void onDismiss(DialogInterface dialog) {
+					if (mConfig.getDevice() == null) {
+						finish();
+					}
+				}
+			})
 			.show();
+
+	}
+
+	private void showPlaylistChooser() {
+		if (mConfig == null || mConfig.getDevice() == null) {
+			return;
+		}
+
+		final MaterialSimpleListAdapter<SonosPlaylist> adapter = new MaterialSimpleListAdapter<>(this);
+
+		new MaterialDialog.Builder(this)
+			.title(R.string.Choose_Playlist)
+			.adapter(adapter, new MaterialDialog.ListCallback() {
+				@Override
+				public void onSelection(MaterialDialog materialDialog, View view, int i, CharSequence charSequence) {
+					mConfig.setPlaylist(adapter.getItem(i).getContent());
+					Pref.setSonosConfig(MainActivity.this, mConfig);
+					materialDialog.dismiss();
+					populatePlaylist();
+				}
+			})
+			.theme(Theme.DARK)
+			.dismissListener(new DialogInterface.OnDismissListener() {
+				@Override
+				public void onDismiss(DialogInterface dialog) {
+					if (mConfig.getPlaylist() == null) {
+						finish();
+					}
+				}
+			})
+			.show();
+
+
+
+		mConfig.getDevice().getPlaylists()
+			.subscribeOn(Schedulers.io())
+			.observeOn(AndroidSchedulers.mainThread())
+			.subscribe(new Action1<SonosPlaylist>() {
+				@Override
+				public void call(SonosPlaylist playlist) {
+					adapter.add(new MaterialSimpleListItem.Builder<SonosPlaylist>(MainActivity.this)
+						.content(playlist)
+						.icon(R.drawable.ic_grid_padded)
+						.backgroundColorRes(R.color.indigo_500)
+						.build());
+				}
+			});
 
 	}
 
