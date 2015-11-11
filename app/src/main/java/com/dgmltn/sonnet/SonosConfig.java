@@ -64,7 +64,7 @@ public class SonosConfig {
 	public static final SonosDevice ZONE_LIVING_ROOM = SonosDevice.newInstance(
 		"http://10.5.23.114:1400/xml/device_description.xml",
 		"Living Room",
-		"RINCON_B8E9378E5CD601400");
+		"RINCON_B8E9373B65D801400");
 
 	public static final SonosDevice ZONE_KITCHEN = SonosDevice.newInstance(
 		"http://10.5.23.204:1400/xml/device_description.xml",
